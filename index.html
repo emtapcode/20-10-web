@@ -5,134 +5,133 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chúc mừng 20-10 — Matrix Rain</title>
   <style>
-    html,body{height:100%;margin:0;background:#000;overflow:hidden;font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial}
+    html,body{
+      height:100%;margin:0;background:#000;overflow:hidden;
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto;
+    }
     #c{position:fixed;inset:0;display:block}
     .card{
       position:fixed;
       left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);
       background:rgba(255,20,147,0.06);
       border:1px solid rgba(255,20,147,0.18);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       color:#ffd6ea;
       padding:28px 36px;
       border-radius:18px;
       box-shadow:0 10px 30px rgba(0,0,0,0.6);
       text-align:center;
       opacity:0;pointer-events:none;
-      transition:opacity .35s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+      transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1);
       z-index:5;
       min-width:240px;
     }
     .card.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
     .card h1{margin:0;font-size:28px;letter-spacing:1px}
-    .card p{margin:10px 0 0;font-size:14px;opacity:.9}
-    .btn{display:inline-block;margin-top:12px;padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#ffc7e5;cursor:pointer}
-    .top-right-note{position:fixed;right:14px;top:14px;color:#ff9ad6;font-size:13px;opacity:.9;z-index:4}
+    .card p{
+      margin:10px 0 0;font-size:14px;opacity:.9;
+      white-space:pre-wrap;display:inline-block;
+      border-right:2px solid #ff9ad6; /* con trỏ nháy */
+      animation: blink .8s step-end infinite alternate;
+    }
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+    .top-right-note{
+      position:fixed;right:14px;top:14px;color:#ff9ad6;
+      font-size:13px;opacity:.9;z-index:4
+    }
     canvas{filter:drop-shadow(0 0 6px rgba(255,20,147,0.18));}
-    @media (max-width:600px){.card{padding:18px 20px;border-radius:14px} .card h1{font-size:20px}}
+    @media (max-width:600px){
+      .card{padding:18px 20px;border-radius:14px}
+      .card h1{font-size:20px}
+    }
   </style>
 </head>
 <body>
   <div class="top-right-note">Nhấn màn hình để hiện/ẩn popup</div>
   <canvas id="c"></canvas>
+
   <div class="card" id="popup">
     <h1 id="title">Chúc mừng 20-10</h1>
-    <p id="subtitle">Chúc mày 20/10 vui vẻ, xinh tươi, học giỏi và luôn chill như Gen Z chính hiệu 😎💐</p>
-    <button class="btn" id="copyBtn">Sao chép lời chúc</button>
+    <p id="subtitle"></p>
   </div>
+
   <script>
+  // ========== Hiệu ứng mưa từ ==========
   const phrases = [
-    'Chúc mừng 20-10',
-    'Tươi cười mỗi ngày',
-    'Xinh đẹp và tự tin',
-    'Happy Women\'s Day',
-    'Mãi luôn rực rỡ',
-    'Một ngày ngập tràn yêu thương 💐'
+    ["20/10", "vui", "vẻ", "nha 💖"],
+    ["Chúc", "mừng", "20-10"],
+    ["Happy", "Women’s", "Day 💐"]
   ];
-
-  const mainTitle = 'Chúc mừng 20-10';
-  const smallMsg = 'Chúc mày 20/10 vui vẻ, xinh tươi, học giỏi và luôn chill như Gen Z chính hiệu 😎💐';
-  const showAfterMs = 2000;
   const color = '255,20,147';
-
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   let W = canvas.width = innerWidth;
   let H = canvas.height = innerHeight;
-  const fontSize = Math.max(14, Math.floor(Math.min(W, H) / 40));
+  const fontSize = Math.max(16, Math.floor(Math.min(W, H) / 30));
   ctx.font = fontSize + 'px monospace';
-  const columns = Math.floor(W / fontSize);
+  const columns = Math.floor(W / (fontSize * 4));
   const streams = [];
+
   for (let i = 0; i < columns; i++) {
     const phrase = phrases[i % phrases.length];
-    const chars = phrase.split('');
-    streams.push({phraseChars: chars,pos: Math.random() * H * -1,speed: fontSize * (0.6 + Math.random() * 1.2),column: i,offset: Math.floor(Math.random() * chars.length)});
+    streams.push({
+      words: phrase,
+      pos: Math.random() * H * -1,
+      speed: fontSize * (0.3 + Math.random() * 0.6), // chậm hơn
+      column: i
+    });
   }
 
   function draw() {
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
     ctx.fillRect(0,0,W,H);
     for (let s of streams) {
-      const x = s.column * fontSize + 8;
-      const len = Math.floor(4 + Math.random() * 6);
-      for (let k = 0; k < len; k++){
-        const idx = (s.offset + k) % s.phraseChars.length;
-        const ch = s.phraseChars[idx] || ' ';
-        const y = s.pos - k * fontSize;
-        if (k === 0) {
-          ctx.fillStyle = `rgba(${color},1)`;
-          ctx.fillText(ch, x, y);
-          ctx.fillStyle = `rgba(${color},0.12)`;
-          ctx.fillText(ch, x+0.6, y+0.6);
-        } else {
-          const alpha = Math.max(0, 0.9 - k * 0.22);
-          ctx.fillStyle = `rgba(${color},${alpha})`;
-          ctx.fillText(ch, x, y);
-        }
-      }
-      s.pos += s.speed * 0.03;
-      if (s.pos - (len * fontSize) > H + 50) {
-        s.pos = -Math.random() * 200 - 50;
-        s.offset = (s.offset + Math.floor(Math.random() * s.phraseChars.length) + 1) % s.phraseChars.length;
-        s.speed = fontSize * (0.6 + Math.random() * 1.2);
+      const x = s.column * (fontSize * 4);
+      s.words.forEach((word, idx)=>{
+        const y = s.pos - idx * (fontSize * 1.4);
+        ctx.fillStyle = `rgba(${color},${1 - idx*0.25})`;
+        ctx.fillText(word, x, y);
+      });
+      s.pos += s.speed * 0.5;
+      if (s.pos - (s.words.length * fontSize) > H + 50) {
+        s.pos = -Math.random() * 400 - 50;
       }
     }
     requestAnimationFrame(draw);
   }
-
-  addEventListener('resize', ()=>{W = canvas.width = innerWidth;H = canvas.height = innerHeight;});
   draw();
+  addEventListener('resize', ()=>{W = canvas.width = innerWidth;H = canvas.height = innerHeight;});
 
+  // ========== Popup xuất hiện sau 3s + typing effect ==========
   const popup = document.getElementById('popup');
   const titleEl = document.getElementById('title');
   const subtitleEl = document.getElementById('subtitle');
-  titleEl.textContent = mainTitle;
-  subtitleEl.textContent = smallMsg;
+  const message = "Chúc mày 1 ngày 20/10 thật vui vẻ 💐\n8386 vạn sự như ý, tỷ sự như mơ,\ntriệu triệu bất ngờ và luôn xinh đẹp học giỏi  🐒 🐒 🐒";
 
-  function showPopup(){popup.classList.add('show');}
-  function hidePopup(){popup.classList.remove('show');}
-  setTimeout(showPopup, showAfterMs);
+  function showPopup(){
+    popup.classList.add('show');
+    typeText(message, subtitleEl);
+  }
+
+  function typeText(text, el){
+    let i = 0;
+    const speed = 40; // tốc độ gõ
+    el.textContent = '';
+    const typing = setInterval(()=>{
+      el.textContent += text[i];
+      i++;
+      if(i >= text.length) clearInterval(typing);
+    }, speed);
+  }
+
+  setTimeout(showPopup, 3000); // delay 3s
+
+  // toggle popup
   let tapped = false;
-  function toggle(){ tapped = !tapped; tapped ? showPopup() : hidePopup(); }
-  addEventListener('pointerdown', (e)=>{if (e.target.closest('.btn')) return;toggle();});
-  
-  document.getElementById('copyBtn').addEventListener('click', async (e)=>{
-    try{await navigator.clipboard.writeText(subtitleEl.textContent);
-      e.target.textContent = 'Đã sao chép!';
-      setTimeout(()=> e.target.textContent = 'Sao chép lời chúc', 1500);
-    }catch(err){e.target.textContent = 'Không copy được';}
-  });
-
-  // ✅ cho phép đổi câu chúc bằng URL
-  (function applyUrlParams(){
-    const url = new URL(location.href);
-    if(url.searchParams.get('msg')){
-      subtitleEl.textContent = decodeURIComponent(url.searchParams.get('msg'));
-    }
-    if(url.searchParams.get('title')){
-      titleEl.textContent = decodeURIComponent(url.searchParams.get('title'));
-    }
-  })();
+  function toggle(){ tapped = !tapped; tapped ? showPopup() : popup.classList.remove('show'); }
+  addEventListener('pointerdown', ()=>toggle());
   </script>
 </body>
 </html>
