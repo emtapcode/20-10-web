@@ -55,7 +55,7 @@
   </div>
 
   <script>
-  // === Hiệu ứng chữ rơi Matrix ===
+  // === Hiệu ứng chữ rơi ===
   const c = document.getElementById('matrix');
   const ctx = c.getContext('2d');
 
@@ -66,9 +66,10 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
+  // các chữ rơi
   const chars = ['chúc','mừng','ngày','20/10'];
-  const fontSize = 24;
-  const columns = Math.floor(c.width / (fontSize * 1.3));
+  const fontSize = 20; // nhỏ hơn
+  const columns = Math.floor(c.width / (fontSize * 1.4));
   const drops = new Array(columns).fill(0);
 
   function draw(){
@@ -78,12 +79,14 @@
     ctx.font = fontSize + "px Inter, sans-serif";
 
     for(let i=0;i<drops.length;i++){
-      const text = chars[Math.floor(Math.random()*chars.length)];
-      ctx.fillText(text, i*fontSize*1.3, drops[i]*fontSize);
+      const word = chars[Math.floor(Math.random()*chars.length)];
+      const text = word + " 💖"; // thêm icon ở cuối
+      ctx.fillText(text, i*fontSize*1.4, drops[i]*fontSize);
+      // khi rơi xuống dưới thì reset lại
       if(drops[i]*fontSize > c.height && Math.random()>0.975){
         drops[i]=0;
       }
-      drops[i]+=0.8;
+      drops[i]+=0.5; // chậm hơn
     }
     requestAnimationFrame(draw);
   }
