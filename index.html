@@ -7,37 +7,32 @@
   <style>
     html,body{
       height:100%;margin:0;background:#000;overflow:hidden;
-      font-family:'Inter',sans-serif;color:#ffd6ea;
+      font-family: Inter, "Segoe UI", "Noto Sans", Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
     canvas{position:fixed;inset:0;display:block;background:#000;}
     .card{
       position:fixed;
       left:50%;top:50%;
-      transform:translate(-50%,-50%) scale(.9);
+      transform:translate(-50%,-50%) scale(.95);
       background:rgba(255,20,147,0.08);
-      border:1px solid rgba(255,20,147,0.25);
+      border:1px solid rgba(255,20,147,0.22);
       backdrop-filter:blur(10px);
-      padding:28px 40px;
-      border-radius:20px;
-      text-align:center;
-      box-shadow:0 0 25px rgba(255,20,147,0.3);
-      opacity:0;pointer-events:none;
-      transition:opacity .6s ease,transform .6s ease;
-      z-index:10;
+      padding:28px 40px;border-radius:18px;text-align:center;
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+      color:#ffd6ea;opacity:0;pointer-events:none;z-index:10;
+      transition:opacity .5s ease,transform .5s ease;
     }
     .card.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
-    .card h1{margin:0;font-size:30px;color:#ff9ad6;}
+    .card h1{margin:0;font-size:34px;color:#ffb0d9}
     .card p{
-      margin-top:12px;font-size:15px;
-      white-space:pre-wrap;display:inline-block;
-      border-right:2px solid #ff9ad6;
+      margin-top:12px;font-size:15px;white-space:pre-wrap;display:inline-block;
+      border-right:2px solid #ff9ad6;padding-right:6px;
       animation:blink .8s step-end infinite alternate;
     }
     @keyframes blink{50%{border-color:transparent}}
-    .top-right-note{
-      position:fixed;right:14px;top:14px;color:#ff9ad6;
-      font-size:13px;opacity:.8;z-index:9;
-    }
+    .top-right-note{position:fixed;right:14px;top:14px;color:#ff9ad6;font-size:13px;opacity:.85;z-index:9}
   </style>
 </head>
 <body>
@@ -50,71 +45,120 @@
   </div>
 
   <script>
+  // --- Thiết lập canvas chuẩn (hdpi) để tránh lỗi font/nhòe ---
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
-  let W = canvas.width = innerWidth;
-  let H = canvas.height = innerHeight;
+  function resizeCanvas() {
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale context so fonts draw sharp
+  }
+  addEventListener('resize', resizeCanvas);
+  resizeCanvas();
 
-  const fontSize = 18;
-  const columns = Math.floor(W / fontSize);
-  const drops = Array(columns).fill(1);
-  const color = '255,20,147'; // hồng neon
+  // --- Thông số mưa chữ ---
+  let W = window.innerWidth;
+  let H = window.innerHeight;
 
-  const letters = 'CHÚCMỪNG20-10HAPPYWOMENSDAY💖💐8386'.split('');
+  // font size (px) trên layout logic (không nhân DPR vì đã setTransform)
+  let fontSize = Math.max(14, Math.floor(Math.min(W, H) / 36));
+  const color = '255,20,147';
 
+  // nguồn ký tự/từ hợp lệ (có tiếng Việt + emoji) -> tránh charset lạ
+  const letters = [
+    '20/10','vui','vẻ','nha','Chúc','mừng','20-10',
+    'Happy','Women','Day','💐','💖','8386','vạn','sự','như','ý','tỷ','như','mơ','triệu','bất','ngờ'
+  ];
+
+  // columns dựa vào fontSize, cho nhiều cột hơn
+  function buildDrops() {
+    W = window.innerWidth; H = window.innerHeight;
+    fontSize = Math.max(14, Math.floor(Math.min(W, H) / 36));
+    const cols = Math.floor(W / (fontSize * 0.9)); // nhiều cột hơn
+    const drops = new Array(cols);
+    for (let i = 0; i < cols; i++) {
+      drops[i] = {
+        y: Math.random() * -H,        // vị trí ban đầu (lên trên)
+        speed: 0.15 + Math.random() * 0.45, // tốc độ base nhỏ => rơi chậm
+        x: i * (fontSize * 0.9)
+      };
+    }
+    return drops;
+  }
+
+  let drops = buildDrops();
+  addEventListener('resize', ()=>{ drops = buildDrops(); });
+
+  // vẽ
   function draw() {
-    ctx.fillStyle = 'rgba(0,0,0,0.08)'; // hiệu ứng fade mượt
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = `rgba(${color},0.85)`;
-    ctx.font = fontSize + 'px monospace';
+    // fade mượt để tạo trail
+    ctx.fillStyle = 'rgba(0,0,0,0.09)';
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+    // font dùng chính xác (có fallback để hiển thị tiếng Việt)
+    ctx.font = `${fontSize}px Inter, "Segoe UI", "Noto Sans", Roboto, Arial, sans-serif`;
+    ctx.textBaseline = 'top';
+    ctx.shadowColor = `rgba(${color},0.65)`;
+    ctx.shadowBlur = 8;
 
     for (let i = 0; i < drops.length; i++) {
-      const text = letters[Math.floor(Math.random() * letters.length)];
-      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+      const d = drops[i];
+      // chọn 1 từ/chuỗi ngẫu nhiên (dễ đọc, có dấu)
+      const txt = letters[Math.floor(Math.random() * letters.length)];
+      // làm alpha nhạt dần theo y để depth perception
+      const alpha = 0.95 - Math.min(0.8, d.y / (H * 1.5));
+      ctx.fillStyle = `rgba(${color},${alpha})`;
 
-      // random reset dòng sau khi chạm đáy
-      if (drops[i] * fontSize > H && Math.random() > 0.98)
-        drops[i] = 0;
+      // vẽ text (giữ theo cột vertical)
+      ctx.fillText(txt, d.x, d.y);
 
-      drops[i] += 0.5; // tốc độ rơi chậm hơn
+      // tăng y chậm lại để chậm rơi; thêm small random để tránh quá đồng bộ
+      d.y += d.speed * (0.6 + Math.random() * 0.6); // <<< tốc độ chậm chủ yếu ở đây
+
+      // reset khi rơi xuống dưới (cho tần suất nhiều hơn)
+      if (d.y > H + 50) {
+        d.y = -Math.random() * 600; // cho khoảng cách xuất hiện ngẫu nhiên
+        d.speed = 0.12 + Math.random() * 0.5; // random lại tốc độ chậm
+      }
     }
 
     requestAnimationFrame(draw);
   }
-
   draw();
 
-  addEventListener('resize', ()=>{
-    W = canvas.width = innerWidth;
-    H = canvas.height = innerHeight;
-  });
-
-  // popup xuất hiện + typing text
+  // --- Popup + typing effect ---
   const popup = document.getElementById('popup');
   const subtitleEl = document.getElementById('subtitle');
-  const message = "Chúc mày 1 ngày 20/10 thật vui vẻ 💐\n8386 vạn sự như ý, tỷ sự như mơ,\ntriệu triệu bất ngờ và luôn xinh đẹp học giỏi  🐒 🐒 🐒";
+  const message = "Chúc mày 1 ngày 20/10 thật vui vẻ 💐\n8386 vạn sự như ý, tỷ sự như mơ,\ntriệu triệu bất ngờ và luôn xinh đẹp học giỏi 💖";
+
+  function typeText(text, el) {
+    let i = 0;
+    el.textContent = '';
+    const speed = 30; // nhanh/chậm gõ
+    const interval = setInterval(()=>{
+      el.textContent += text[i] ?? '';
+      i++;
+      if (i >= text.length) clearInterval(interval);
+    }, speed);
+  }
 
   function showPopup(){
     popup.classList.add('show');
     typeText(message, subtitleEl);
   }
+  setTimeout(showPopup, 3000);
 
-  function typeText(text, el){
-    let i=0;el.textContent='';
-    const interval=setInterval(()=>{
-      el.textContent+=text[i];
-      i++;
-      if(i>=text.length) clearInterval(interval);
-    },40);
-  }
-
-  setTimeout(showPopup,3000);
-
-  let visible=true;
-  addEventListener('pointerdown',()=>{
-    visible=!visible;
-    if(visible) showPopup();
+  // toggle popup bằng click/tap
+  let visible = true;
+  addEventListener('pointerdown', ()=>{
+    visible = !visible;
+    if (visible) showPopup();
     else popup.classList.remove('show');
   });
   </script>
