@@ -6,8 +6,8 @@
   <title>Chúc mừng 20-10 💐</title>
   <style>
     html,body{
-      height:100%;
       margin:0;
+      height:100%;
       background:#000;
       overflow:hidden;
       font-family:"Segoe UI",Inter,Roboto,sans-serif;
@@ -15,13 +15,12 @@
     canvas{
       position:fixed;
       inset:0;
-      display:block;
       background:#000;
+      display:block;
     }
     .card{
       position:fixed;
-      left:50%;
-      top:50%;
+      left:50%;top:50%;
       transform:translate(-50%,-50%) scale(.95);
       background:rgba(255,20,147,0.08);
       border:1px solid rgba(255,20,147,0.25);
@@ -32,9 +31,7 @@
       box-shadow:0 10px 30px rgba(0,0,0,0.5);
       color:#ffd6ea;
       opacity:0;
-      transition:opacity .6s ease, transform .6s ease;
-      max-width:90%;
-      white-space:pre-wrap;
+      transition:opacity .6s ease,transform .6s ease;
     }
     .card.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
     .card h1{margin:0;font-size:36px;color:#ff9bd7;}
@@ -43,6 +40,7 @@
       font-size:16px;
       line-height:1.6;
       color:#ffc6e7;
+      white-space:pre-wrap;
     }
   </style>
 </head>
@@ -55,44 +53,42 @@
   </div>
 
   <script>
-  // === Hiệu ứng chữ rơi ===
-  const c = document.getElementById('matrix');
-  const ctx = c.getContext('2d');
+  // --- MATRIX CHỮ RƠI THEO CỘT ---
+  const canvas = document.getElementById('matrix');
+  const ctx = canvas.getContext('2d');
 
   function resizeCanvas(){
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
   }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // các chữ rơi
-  const chars = ['chúc','mừng','ngày','20/10'];
-  const fontSize = 20; // nhỏ hơn
-  const columns = Math.floor(c.width / (fontSize * 1.4));
-  const drops = new Array(columns).fill(0);
+  const letters = ['c','h','ú','c',' ','m','ừ','n','g',' ','n','g','à','y',' ','2','0','/','1','0','💖'];
+  const fontSize = 16; // nhỏ hơn
+  const columns = Math.floor(canvas.width / fontSize);
+  const drops = Array(columns).fill(0);
 
   function draw(){
+    // làm mờ nhẹ để tạo vệt sáng
     ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle = 'rgba(255,20,147,0.9)';
     ctx.font = fontSize + "px Inter, sans-serif";
-
     for(let i=0;i<drops.length;i++){
-      const word = chars[Math.floor(Math.random()*chars.length)];
-      const text = word + " 💖"; // thêm icon ở cuối
-      ctx.fillText(text, i*fontSize*1.4, drops[i]*fontSize);
-      // khi rơi xuống dưới thì reset lại
-      if(drops[i]*fontSize > c.height && Math.random()>0.975){
-        drops[i]=0;
+      const text = letters[Math.floor(Math.random()*letters.length)];
+      ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+      // random reset vị trí khi ra khỏi khung
+      if(drops[i]*fontSize > canvas.height && Math.random() > 0.985){
+        drops[i] = 0;
       }
-      drops[i]+=0.5; // chậm hơn
+      drops[i] += 0.35; // tốc độ rơi (chậm lại)
     }
     requestAnimationFrame(draw);
   }
   draw();
 
-  // === Hiện popup + hiệu ứng gõ chữ ===
+  // --- POPUP CHÚC ---
   const popup = document.getElementById('popup');
   const msg = document.getElementById('msg');
   const text = "Chúc mày 1 ngày 20/10 thật vui vẻ 💐\n8386 vạn sự như ý, tỷ sự như mơ,\ntriệu triệu bất ngờ và luôn xinh đẹp học giỏi 💖";
