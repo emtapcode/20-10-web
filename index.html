@@ -45,7 +45,7 @@
   </div>
 
   <script>
-  // --- Thiết lập canvas chuẩn (hdpi) để tránh lỗi font/nhòe ---
+  // --- Canvas chuẩn HDPI ---
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
@@ -57,35 +57,30 @@
     canvas.style.height = h + 'px';
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale context so fonts draw sharp
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
   addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // --- Thông số mưa chữ ---
   let W = window.innerWidth;
   let H = window.innerHeight;
-
-  // font size (px) trên layout logic (không nhân DPR vì đã setTransform)
-  let fontSize = Math.max(14, Math.floor(Math.min(W, H) / 36));
   const color = '255,20,147';
 
-  // nguồn ký tự/từ hợp lệ (có tiếng Việt + emoji) -> tránh charset lạ
   const letters = [
-    '20/10','vui','vẻ','nha','Chúc','mừng','20-10',
-    'Happy','Women','Day','💐','💖','8386','vạn','sự','như','ý','tỷ','như','mơ','triệu','bất','ngờ'
+    '20/10','vui','vẻ','nha','Chúc','mừng','💐','💖','8386','vạn','sự','như','ý','tỷ','mơ','triệu','bất','ngờ'
   ];
 
-  // columns dựa vào fontSize, cho nhiều cột hơn
+  // === Tạo cột rơi ===
+  let fontSize = Math.max(16, Math.floor(Math.min(W, H) / 34));
   function buildDrops() {
     W = window.innerWidth; H = window.innerHeight;
-    fontSize = Math.max(14, Math.floor(Math.min(W, H) / 36));
-    const cols = Math.floor(W / (fontSize * 0.9)); // nhiều cột hơn
+    fontSize = Math.max(16, Math.floor(Math.min(W, H) / 34));
+    const cols = Math.floor(W / (fontSize * 0.9));
     const drops = new Array(cols);
     for (let i = 0; i < cols; i++) {
       drops[i] = {
-        y: Math.random() * -H,        // vị trí ban đầu (lên trên)
-        speed: 0.15 + Math.random() * 0.45, // tốc độ base nhỏ => rơi chậm
+        y: Math.random() * -H,
+        speed: 0.5 + Math.random() * 0.6, // tốc độ nhanh hơn
         x: i * (fontSize * 0.9)
       };
     }
@@ -95,13 +90,10 @@
   let drops = buildDrops();
   addEventListener('resize', ()=>{ drops = buildDrops(); });
 
-  // vẽ
+  // === Vẽ hiệu ứng rơi ===
   function draw() {
-    // fade mượt để tạo trail
-    ctx.fillStyle = 'rgba(0,0,0,0.09)';
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-
-    // font dùng chính xác (có fallback để hiển thị tiếng Việt)
     ctx.font = `${fontSize}px Inter, "Segoe UI", "Noto Sans", Roboto, Arial, sans-serif`;
     ctx.textBaseline = 'top';
     ctx.shadowColor = `rgba(${color},0.65)`;
@@ -109,30 +101,25 @@
 
     for (let i = 0; i < drops.length; i++) {
       const d = drops[i];
-      // chọn 1 từ/chuỗi ngẫu nhiên (dễ đọc, có dấu)
       const txt = letters[Math.floor(Math.random() * letters.length)];
-      // làm alpha nhạt dần theo y để depth perception
-      const alpha = 0.95 - Math.min(0.8, d.y / (H * 1.5));
+      const alpha = 0.9 - Math.min(0.8, d.y / (H * 1.3));
       ctx.fillStyle = `rgba(${color},${alpha})`;
-
-      // vẽ text (giữ theo cột vertical)
       ctx.fillText(txt, d.x, d.y);
 
-      // tăng y chậm lại để chậm rơi; thêm small random để tránh quá đồng bộ
-      d.y += d.speed * (0.6 + Math.random() * 0.6); // <<< tốc độ chậm chủ yếu ở đây
+      // tăng tốc rơi
+      d.y += d.speed * 2.2; // hệ số 2.2 = nhanh hơn gấp đôi bản cũ
 
-      // reset khi rơi xuống dưới (cho tần suất nhiều hơn)
-      if (d.y > H + 50) {
-        d.y = -Math.random() * 600; // cho khoảng cách xuất hiện ngẫu nhiên
-        d.speed = 0.12 + Math.random() * 0.5; // random lại tốc độ chậm
+      // reset lại khi rơi quá màn
+      if (d.y > H + 60) {
+        d.y = -Math.random() * 300;
+        d.speed = 0.4 + Math.random() * 0.8;
       }
     }
-
     requestAnimationFrame(draw);
   }
   draw();
 
-  // --- Popup + typing effect ---
+  // === Popup gõ chữ ===
   const popup = document.getElementById('popup');
   const subtitleEl = document.getElementById('subtitle');
   const message = "Chúc mày 1 ngày 20/10 thật vui vẻ 💐\n8386 vạn sự như ý, tỷ sự như mơ,\ntriệu triệu bất ngờ và luôn xinh đẹp học giỏi 💖";
@@ -140,7 +127,7 @@
   function typeText(text, el) {
     let i = 0;
     el.textContent = '';
-    const speed = 30; // nhanh/chậm gõ
+    const speed = 30;
     const interval = setInterval(()=>{
       el.textContent += text[i] ?? '';
       i++;
@@ -152,9 +139,8 @@
     popup.classList.add('show');
     typeText(message, subtitleEl);
   }
-  setTimeout(showPopup, 3000);
+  setTimeout(showPopup, 2500);
 
-  // toggle popup bằng click/tap
   let visible = true;
   addEventListener('pointerdown', ()=>{
     visible = !visible;
